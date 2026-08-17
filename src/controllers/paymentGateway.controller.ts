@@ -21,10 +21,7 @@ export class PaymentGatewayController {
         throw new ApiError(404, 'Pesanan tidak ditemukan');
       }
 
-      const existingPayment = await paymentRepository.findByOrderId(order_id);
-      if (existingPayment) {
-        throw new ApiError(400, 'Pesanan ini sudah memiliki pembayaran');
-      }
+      let existingPayment = await paymentRepository.findByOrderId(order_id);
 
       // Build callback URL
       const callbackUrl = `${config.frontendUrl.replace(/\/$/, '')}/api/payment-gateway/webhook`;
@@ -36,13 +33,18 @@ export class PaymentGatewayController {
         callbackUrl
       );
 
-      // Save payment record
-      const payment = await paymentRepository.create({
-        order_id,
-        method: 'qris',
-        amount: order.total_amount,
-        snap_token: qrCode.id,
-      });
+      // Save or update payment record
+      let payment;
+      if (existingPayment) {
+        payment = await paymentRepository.updateQris(existingPayment.id, qrCode.id);
+      } else {
+        payment = await paymentRepository.create({
+          order_id,
+          method: 'qris',
+          amount: order.total_amount,
+          snap_token: qrCode.id,
+        });
+      }
 
       res.status(201).json({
         success: true,

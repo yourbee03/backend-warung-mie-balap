@@ -9,9 +9,13 @@ const orderItemSchema = z.object({
 const createOrderBody = z.object({
   order_type: z.enum(['online', 'qr', 'takeaway'], { required_error: 'Tipe pesanan wajib diisi' }),
   order_service_type: z.enum(['takeaway', 'delivery', 'dine_in']).optional(),
+  payment_method: z.enum(['cash', 'qris']).optional(),
   table_id: z.number().int().positive().optional(),
   guest_name: z.string().optional(),
   guest_phone: z.string().optional(),
+  shipping_address: z.string().optional(),
+  user_latitude: z.number().optional(),
+  user_longitude: z.number().optional(),
   notes: z.string().optional(),
   items: z.array(orderItemSchema).min(1, 'Minimal 1 item'),
 });

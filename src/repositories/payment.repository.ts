@@ -54,6 +54,14 @@ export class PaymentRepository {
     return this.findById(insertId) as Promise<Payment>;
   }
 
+  async updateQris(id: number, snapToken: string): Promise<Payment> {
+    await pool.query(
+      'UPDATE payments SET method = ?, snap_token = ? WHERE id = ?',
+      ['qris', snapToken, id]
+    );
+    return this.findById(id) as Promise<Payment>;
+  }
+
   async updateStatus(id: number, status: 'pending' | 'paid' | 'rejected' | 'expired', verifiedBy?: number): Promise<Payment> {
     const updates: string[] = ['status = ?'];
     const params: any[] = [status];

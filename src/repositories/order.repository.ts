@@ -211,13 +211,15 @@ export class OrderRepository {
       );
     }
 
-    // Create payment record for online orders
+    // Create payment record for online orders (cash only — QRIS handled by createQrisPayment)
     if (data.order_type === 'online') {
       const paymentMethod = data.payment_method || 'cash';
-      await pool.query(
-        'INSERT INTO payments (order_id, method, status, amount) VALUES (?, ?, ?, ?)',
-        [orderId, paymentMethod, 'pending', totalAmount]
-      );
+      if (paymentMethod === 'cash') {
+        await pool.query(
+          'INSERT INTO payments (order_id, method, status, amount) VALUES (?, ?, ?, ?)',
+          [orderId, paymentMethod, 'pending', totalAmount]
+        );
+      }
     }
 
     return this.findById(orderId);
