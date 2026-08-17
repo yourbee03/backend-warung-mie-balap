@@ -85,7 +85,11 @@ export class PaymentGatewayController {
       console.log(`✅ Xendit webhook received: ${payload.external_id} - ${payload.status}`);
 
       // Strip timestamp suffix dari external_id (format: orderNumber-timestamp)
-      const orderNumber = payload.external_id.replace(/-\d{13}$/, '');
+      const orderNumber = (payload.external_id || '').replace(/-\d{13}$/, '');
+
+      if (!orderNumber) {
+        return res.status(400).json({ error: 'Missing external_id' });
+      }
 
       // Find payment by order number (external_id)
       const payment = await paymentRepository.findByOrderNumber(orderNumber);
