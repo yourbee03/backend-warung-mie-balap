@@ -58,8 +58,8 @@ export class XenditService {
     const data = await response.json() as any;
 
     if (!response.ok) {
-      console.error('Xendit create QR error:', data);
-      throw new ApiError(500, data.message || 'Gagal membuat QR Code');
+      console.error('Xendit create QR error:', JSON.stringify({ status: response.status, data }));
+      throw new ApiError(500, data.message || data.error?.message || `Xendit error ${response.status}`);
     }
 
     return data as XenditQRCodeResponse;
