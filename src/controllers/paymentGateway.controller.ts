@@ -23,8 +23,9 @@ export class PaymentGatewayController {
 
       let existingPayment = await paymentRepository.findByOrderId(order_id);
 
-      // Build callback URL
-      const callbackUrl = `${config.frontendUrl.replace(/\/$/, '')}/api/payment-gateway/webhook`;
+      // Build callback URL (backend URL, not frontend)
+      const backendUrl = config.backendUrl || config.frontendUrl;
+      const callbackUrl = `${backendUrl.replace(/\/$/, '')}/api/payment-gateway/webhook`;
 
       // Create QR Code via Xendit
       const qrCode = await xenditService.createQrCode(

@@ -25,6 +25,7 @@ export const config = {
   },
 
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  backendUrl: process.env.BACKEND_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:5000'),
 
   uploadDir: path.resolve(process.env.UPLOAD_DIR || './src/uploads'),
 
