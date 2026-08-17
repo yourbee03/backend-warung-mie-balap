@@ -27,9 +27,10 @@ export class PaymentGatewayController {
       const backendUrl = config.backendUrl || config.frontendUrl;
       const callbackUrl = `${backendUrl.replace(/\/$/, '')}/api/payment-gateway/webhook`;
 
-      // Create QR Code via Xendit
+      // Create QR Code via Xendit (unique external_id dengan suffix timestamp)
+      const externalId = `${order.order_number}-${Date.now()}`;
       const qrCode = await xenditService.createQrCode(
-        order.order_number,
+        externalId,
         order.total_amount,
         callbackUrl
       );
@@ -83,8 +84,11 @@ export class PaymentGatewayController {
 
       console.log(`✅ Xendit webhook received: ${payload.external_id} - ${payload.status}`);
 
+      // Strip timestamp suffix dari external_id (format: orderNumber-timestamp)
+      const orderNumber = payload.external_id.replace(/-\d{13}$/, '');
+
       // Find payment by order number (external_id)
-      const payment = await paymentRepository.findByOrderNumber(payload.external_id);
+      const payment = await paymentRepository.findByOrderNumber(orderNumber);
       if (!payment) {
         return res.status(404).json({ error: 'Payment not found' });
       }
