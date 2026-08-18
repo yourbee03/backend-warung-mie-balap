@@ -172,8 +172,9 @@ export class OrderRepository {
   }): Promise<any> {
     const orderNumber = generateOrderNumber(data.order_type);
     const itemsTotal = data.items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+    const tax = Math.round(itemsTotal * 0.1);
     const shippingCost = data.shipping_cost || 0;
-    const totalAmount = itemsTotal + shippingCost;
+    const totalAmount = itemsTotal + tax + shippingCost;
 
     const [result] = await pool.query(
       `INSERT INTO orders (user_id, table_id, order_number, order_type, order_service_type, status, total_amount, guest_name, guest_phone, shipping_address, shipping_cost, shipping_distance, notes) 
