@@ -78,22 +78,24 @@ export class PaymentGatewayController {
       const body = req.body;
       console.log(`📋 FULL webhook body:`, JSON.stringify(body));
 
-      // Xendit QR webhook: { event: "qr.payment", data: { id, external_id, qr_id, status, amount } }
-      const data = body.data || body;
+      // Xendit QR webhook: { event, status, qr_code: { external_id, id } }
+      const qrCode = body.qr_code || {};
+      const externalId = qrCode.external_id;
+      const qrId = qrCode.id;
 
-      // Find payment: try external_id first, then qr_id
+      console.log(`🔍 external_id=${externalId} qr_id=${qrId} status=${body.status}`);
+
+      // Find payment by external_id (stored in redirect_url)
       let payment = null;
-      if (data.external_id) {
-        console.log(`🔍 Searching by external_id: ${data.external_id}`);
-        payment = await paymentRepository.findByExternalId(data.external_id);
+      if (externalId) {
+        payment = await paymentRepository.findByExternalId(externalId);
       }
-      if (!payment && data.qr_id) {
-        console.log(`🔍 Searching by qr_id: ${data.qr_id}`);
-        payment = await paymentRepository.findByQrId(data.qr_id);
+      if (!payment && qrId) {
+        payment = await paymentRepository.findByQrId(qrId);
       }
 
       if (!payment) {
-        console.error(`❌ Payment not found for external_id=${data.external_id} qr_id=${data.qr_id}`);
+        console.error(`❌ Payment not found for external_id=${externalId} qr_id=${qrId}`);
         return res.status(404).json({ error: 'Payment not found' });
       }
 
@@ -102,7 +104,7 @@ export class PaymentGatewayController {
       }
 
       // Check if payment is completed
-      if (xenditService.isPaymentCompleted(data.status)) {
+      if (xenditService.isPaymentCompleted(body.status)) {
         await paymentRepository.updateStatus(payment.id, 'paid');
         await orderRepository.updateStatus(payment.order_id, 'processing');
 
@@ -127,7 +129,7 @@ export class PaymentGatewayController {
             order,
           });
         }
-      } else if (xenditService.isPaymentFailed(data.status)) {
+      } else if (xenditService.isPaymentFailed(body.status)) {
         await paymentRepository.updateStatus(payment.id, 'rejected');
         await orderRepository.updateStatus(payment.order_id, 'cancelled');
       }
