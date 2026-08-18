@@ -74,25 +74,19 @@ export class PaymentGatewayController {
         return res.status(401).json({ error: 'Invalid token' });
       }
 
-      const payload = req.body as {
-        id: string;
-        external_id: string;
-        amount: number;
-        status: string;
-        [key: string]: any;
-      };
+      // Xendit QR webhook: { event: "qr.payment", data: { id, qr_id, status, amount, ... } }
+      const body = req.body as { event?: string; data?: any };
+      const payload = body.data || body;
 
-      console.log(`✅ Xendit webhook received: ${payload.external_id} - ${payload.status}`);
+      console.log(`✅ Xendit webhook received: event=${body.event} qr_id=${payload.qr_id} status=${payload.status}`);
 
-      // Strip timestamp suffix dari external_id (format: orderNumber-timestamp)
-      const orderNumber = (payload.external_id || '').replace(/-\d{13}$/, '');
-
-      if (!orderNumber) {
-        return res.status(400).json({ error: 'Missing external_id' });
+      // Find payment by qr_id (stored in snap_token)
+      const qrId = payload.qr_id || payload.id;
+      if (!qrId) {
+        return res.status(400).json({ error: 'Missing qr_id' });
       }
 
-      // Find payment by order number (external_id)
-      const payment = await paymentRepository.findByOrderNumber(orderNumber);
+      const payment = await paymentRepository.findByQrId(qrId);
       if (!payment) {
         return res.status(404).json({ error: 'Payment not found' });
       }

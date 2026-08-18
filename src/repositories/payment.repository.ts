@@ -25,6 +25,12 @@ export class PaymentRepository {
     return payments[0] || null;
   }
 
+  async findByQrId(qrId: string): Promise<Payment | null> {
+    const [rows] = await pool.query('SELECT * FROM payments WHERE snap_token = ?', [qrId]);
+    const payments = rows as Payment[];
+    return payments[0] || null;
+  }
+
   async create(data: {
     order_id: number;
     method: 'cash' | 'bank_transfer' | 'qris';
