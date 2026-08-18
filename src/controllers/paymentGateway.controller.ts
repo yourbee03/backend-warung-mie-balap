@@ -79,18 +79,20 @@ export class PaymentGatewayController {
       const body = req.body as { event?: string; data?: any };
       const payload = body.data || body;
 
-      console.log(`✅ Xendit webhook received: event=${body.event} qr_id=${payload.qr_id} status=${payload.status}`);
-      console.log(`📋 Webhook full payload:`, JSON.stringify(body));
+      console.log(`✅ Xendit webhook received: event=${body.event} status=${payload.status}`);
+      console.log(`📋 Webhook data:`, JSON.stringify({ external_id: payload.external_id, qr_id: payload.qr_id, id: payload.id }));
 
-      // Find payment by qr_id (stored in snap_token)
-      const qrId = payload.qr_id || payload.id;
-      if (!qrId) {
-        return res.status(400).json({ error: 'Missing qr_id' });
+      // Find payment: try external_id first, then qr_id
+      let payment = null;
+      if (payload.external_id) {
+        payment = await paymentRepository.findByExternalId(payload.external_id);
+      }
+      if (!payment && payload.qr_id) {
+        payment = await paymentRepository.findByQrId(payload.qr_id);
       }
 
-      console.log(`🔍 Looking for payment with snap_token: ${qrId}`);
-      const payment = await paymentRepository.findByQrId(qrId);
       if (!payment) {
+        console.error(`❌ Payment not found for external_id=${payload.external_id} qr_id=${payload.qr_id}`);
         return res.status(404).json({ error: 'Payment not found' });
       }
 

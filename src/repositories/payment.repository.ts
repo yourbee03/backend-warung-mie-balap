@@ -31,6 +31,12 @@ export class PaymentRepository {
     return payments[0] || null;
   }
 
+  async findByExternalId(externalId: string): Promise<Payment | null> {
+    const [rows] = await pool.query('SELECT * FROM payments WHERE redirect_url = ?', [externalId]);
+    const payments = rows as Payment[];
+    return payments[0] || null;
+  }
+
   async create(data: {
     order_id: number;
     method: 'cash' | 'bank_transfer' | 'qris';
