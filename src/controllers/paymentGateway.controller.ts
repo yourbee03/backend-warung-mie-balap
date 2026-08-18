@@ -38,13 +38,14 @@ export class PaymentGatewayController {
       // Save or update payment record
       let payment;
       if (existingPayment) {
-        payment = await paymentRepository.updateQris(existingPayment.id, qrCode.id);
+        payment = await paymentRepository.updateQris(existingPayment.id, qrCode.id, qrCode.external_id);
       } else {
         payment = await paymentRepository.create({
           order_id,
           method: 'qris',
           amount: order.total_amount,
           snap_token: qrCode.id,
+          redirect_url: qrCode.external_id,
         });
       }
 
@@ -173,7 +174,8 @@ export class PaymentGatewayController {
         throw new ApiError(400, 'QR Code belum dibuat');
       }
 
-      const result = await xenditService.simulatePayment(payment.snap_token, Number(payment.amount));
+      const externalId = payment.redirect_url || payment.snap_token;
+      const result = await xenditService.simulatePayment(externalId, Number(payment.amount));
 
       res.status(200).json({
         success: true,
