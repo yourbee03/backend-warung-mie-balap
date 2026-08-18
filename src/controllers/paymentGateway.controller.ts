@@ -80,6 +80,7 @@ export class PaymentGatewayController {
       const payload = body.data || body;
 
       console.log(`✅ Xendit webhook received: event=${body.event} qr_id=${payload.qr_id} status=${payload.status}`);
+      console.log(`📋 Webhook full payload:`, JSON.stringify(body));
 
       // Find payment by qr_id (stored in snap_token)
       const qrId = payload.qr_id || payload.id;
@@ -87,6 +88,7 @@ export class PaymentGatewayController {
         return res.status(400).json({ error: 'Missing qr_id' });
       }
 
+      console.log(`🔍 Looking for payment with snap_token: ${qrId}`);
       const payment = await paymentRepository.findByQrId(qrId);
       if (!payment) {
         return res.status(404).json({ error: 'Payment not found' });
