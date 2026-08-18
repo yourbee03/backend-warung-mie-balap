@@ -155,6 +155,35 @@ export class PaymentGatewayController {
       next(error);
     }
   }
+
+  async simulatePayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { order_id } = req.body;
+
+      if (!order_id) {
+        throw new ApiError(400, 'order_id wajib diisi');
+      }
+
+      const payment = await paymentRepository.findByOrderId(order_id);
+      if (!payment) {
+        throw new ApiError(404, 'Pembayaran tidak ditemukan');
+      }
+
+      if (!payment.snap_token) {
+        throw new ApiError(400, 'QR Code belum dibuat');
+      }
+
+      const result = await xenditService.simulatePayment(payment.snap_token, Number(payment.amount));
+
+      res.status(200).json({
+        success: true,
+        message: 'Simulasi pembayaran berhasil',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new PaymentGatewayController();

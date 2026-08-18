@@ -9,5 +9,6 @@ router.post('/webhook', paymentGatewayController.handleWebhook);
 // Authenticated user routes
 router.post('/create-qris', paymentGatewayController.createQrisPayment);
 router.get('/status/:orderId', paymentGatewayController.getQrisStatus);
+router.post('/simulate', paymentGatewayController.simulatePayment);
 
 export default router;
